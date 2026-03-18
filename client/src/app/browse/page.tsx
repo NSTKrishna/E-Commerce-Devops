@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { useState } from "react"
+import Link from "next/link"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@/components/ui/sheet"
 import {
   Search,
   Filter,
@@ -34,7 +34,7 @@ import {
   Grid,
   List,
   SlidersHorizontal,
-} from "lucide-react";
+} from "lucide-react"
 
 const categories = [
   "All Categories",
@@ -46,7 +46,7 @@ const categories = [
   "Photography",
   "Design & Creative",
   "Education",
-];
+]
 
 const requests = [
   {
@@ -127,34 +127,34 @@ const requests = [
     views: 345,
     buyer: { name: "Lisa T.", rating: 4.8 },
   },
-];
+]
 
 function getUrgencyBadge(urgency: string) {
   switch (urgency) {
     case "Urgent":
-      return <Badge variant="destructive">Urgent</Badge>;
+      return <Badge variant="destructive">Urgent</Badge>
     case "Flexible":
-      return <Badge variant="secondary">Flexible</Badge>;
+      return <Badge variant="secondary">Flexible</Badge>
     default:
-      return <Badge variant="outline">Normal</Badge>;
+      return <Badge variant="outline">Normal</Badge>
   }
 }
 
 export default function BrowsePage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [sortBy, setSortBy] = useState("recent");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("All Categories")
+  const [sortBy, setSortBy] = useState("recent")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
   const filteredRequests = requests.filter((request) => {
     const matchesSearch =
       request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.description.toLowerCase().includes(searchQuery.toLowerCase());
+      request.description.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory =
       selectedCategory === "All Categories" ||
-      request.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+      request.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
   const sortedRequests = [...filteredRequests].sort((a, b) => {
     switch (sortBy) {
@@ -162,18 +162,18 @@ export default function BrowsePage() {
         return (
           parseFloat(b.budget.split(" - ")[1].replace(/[^0-9]/g, "")) -
           parseFloat(a.budget.split(" - ")[1].replace(/[^0-9]/g, ""))
-        );
+        )
       case "budget_low":
         return (
           parseFloat(a.budget.split(" - ")[0].replace(/[^0-9]/g, "")) -
           parseFloat(b.budget.split(" - ")[0].replace(/[^0-9]/g, ""))
-        );
+        )
       case "offers":
-        return b.offers - a.offers;
+        return b.offers - a.offers
       default:
-        return 0;
+        return 0
     }
-  });
+  })
 
   const FilterSidebar = () => (
     <div className="space-y-6">
@@ -228,10 +228,7 @@ export default function BrowsePage() {
           {["Urgent", "Normal", "Flexible"].map((urgency) => (
             <div key={urgency} className="flex items-center gap-2">
               <Checkbox id={urgency} />
-              <Label
-                htmlFor={urgency}
-                className="text-sm text-muted-foreground"
-              >
+              <Label htmlFor={urgency} className="text-sm text-muted-foreground">
                 {urgency}
               </Label>
             </div>
@@ -239,7 +236,7 @@ export default function BrowsePage() {
         </div>
       </div>
     </div>
-  );
+  )
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -248,9 +245,7 @@ export default function BrowsePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">
-              Browse Requests
-            </h1>
+            <h1 className="text-3xl font-bold text-foreground">Browse Requests</h1>
             <p className="mt-2 text-muted-foreground">
               Find buyer requests that match your skills and send offers
             </p>
@@ -293,12 +288,8 @@ export default function BrowsePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="budget_high">
-                    Budget: High to Low
-                  </SelectItem>
-                  <SelectItem value="budget_low">
-                    Budget: Low to High
-                  </SelectItem>
+                  <SelectItem value="budget_high">Budget: High to Low</SelectItem>
+                  <SelectItem value="budget_low">Budget: Low to High</SelectItem>
                   <SelectItem value="offers">Most Offers</SelectItem>
                 </SelectContent>
               </Select>
@@ -417,5 +408,5 @@ export default function BrowsePage() {
       </main>
       <Footer />
     </div>
-  );
+  )
 }

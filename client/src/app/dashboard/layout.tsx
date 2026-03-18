@@ -1,21 +1,20 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   FileText,
-  MessageSquare,
   Tag,
   User,
   Settings,
@@ -25,80 +24,83 @@ import {
   X,
   Plus,
   ChevronDown,
-} from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "My Requests", href: "/dashboard/requests", icon: FileText },
   { name: "Offers Received", href: "/dashboard/offers", icon: Tag },
-  { name: "Messages", href: "/dashboard/messages", icon: MessageSquare },
   { name: "Profile", href: "/dashboard/profile", icon: User },
-]
+];
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const pathname = usePathname();
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient()
-    
+    const supabase = createClient();
+
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      setIsLoading(false)
-    }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+      setIsLoading(false);
+    };
 
-    getUser()
+    getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   const getUserInitials = () => {
-    if (!user) return "?"
-    const firstName = user.user_metadata?.first_name || ""
-    const lastName = user.user_metadata?.last_name || ""
+    if (!user) return "?";
+    const firstName = user.user_metadata?.first_name || "";
+    const lastName = user.user_metadata?.last_name || "";
     if (firstName && lastName) {
-      return `${firstName[0]}${lastName[0]}`.toUpperCase()
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
     }
-    return user.email?.[0]?.toUpperCase() || "?"
-  }
+    return user.email?.[0]?.toUpperCase() || "?";
+  };
 
   const getUserDisplayName = () => {
-    if (!user) return "User"
-    const firstName = user.user_metadata?.first_name
-    const lastName = user.user_metadata?.last_name
+    if (!user) return "User";
+    const firstName = user.user_metadata?.first_name;
+    const lastName = user.user_metadata?.last_name;
     if (firstName && lastName) {
-      return `${firstName} ${lastName}`
+      return `${firstName} ${lastName}`;
     }
-    return user.email?.split("@")[0] || "User"
-  }
+    return user.email?.split("@")[0] || "User";
+  };
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
-    )
+    );
   }
 
   return (
@@ -122,9 +124,13 @@ export default function DashboardLayout({
           <div className="flex h-16 items-center justify-between border-b border-border px-6">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">B</span>
+                <span className="text-sm font-bold text-primary-foreground">
+                  B
+                </span>
               </div>
-              <span className="text-xl font-bold text-foreground">BidBoard</span>
+              <span className="text-xl font-bold text-foreground">
+                BidBoard
+              </span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -137,7 +143,7 @@ export default function DashboardLayout({
           {/* Navigation */}
           <nav className="flex-1 space-y-1 px-3 py-4">
             {navigation.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.name}
@@ -151,7 +157,7 @@ export default function DashboardLayout({
                   <item.icon className="h-5 w-5" />
                   {item.name}
                 </Link>
-              )
+              );
             })}
           </nav>
 
@@ -179,7 +185,8 @@ export default function DashboardLayout({
               <Menu className="h-6 w-6" />
             </button>
             <h1 className="text-lg font-semibold text-foreground sm:text-xl">
-              {navigation.find((item) => item.href === pathname)?.name || "Dashboard"}
+              {navigation.find((item) => item.href === pathname)?.name ||
+                "Dashboard"}
             </h1>
           </div>
 
@@ -203,14 +210,22 @@ export default function DashboardLayout({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">New offer received</span>
-                    <span className="text-xs text-muted-foreground">2 minutes ago</span>
+                    <span className="text-sm font-medium">
+                      New offer received
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      2 minutes ago
+                    </span>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">Message from seller</span>
-                    <span className="text-xs text-muted-foreground">1 hour ago</span>
+                    <span className="text-sm font-medium">
+                      Message from seller
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      1 hour ago
+                    </span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -248,7 +263,7 @@ export default function DashboardLayout({
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onClick={handleSignOut}
                 >
@@ -264,5 +279,5 @@ export default function DashboardLayout({
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
-  )
+  );
 }
