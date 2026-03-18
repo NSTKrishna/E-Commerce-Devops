@@ -4,7 +4,7 @@ const generateToken = require('../utils/jwt');
 
 const prisma = require('../utils/db');
 
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
     const { name, email, password } = req.body;
 
     try {
@@ -35,15 +35,15 @@ const registerUser = async (req, res) => {
                 role: user.role,
                 token: generateToken(user.id, user.role),
             });
-        } else {
-            res.status(400).json({ message: 'Invalid user data' });
+            res.status(400);
+            throw new Error('Invalid user data');
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
     const { email, password } = req.body;
 
     try {
@@ -60,10 +60,11 @@ const loginUser = async (req, res) => {
                 token: generateToken(user.id, user.role),
             });
         } else {
-            res.status(401).json({ message: 'Invalid email or password' });
+            res.status(401);
+            throw new Error('Invalid email or password');
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 

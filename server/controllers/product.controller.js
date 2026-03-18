@@ -1,15 +1,15 @@
 const prisma = require('../utils/db');
 
-const getProducts = async (req, res) => {
+const getProducts = async (req, res, next) => {
     try {
         const products = await prisma.product.findMany();
         res.json(products);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const getProductById = async (req, res) => {
+const getProductById = async (req, res, next) => {
     try {
         const product = await prisma.product.findUnique({
             where: { id: parseInt(req.params.id) },
@@ -17,14 +17,15 @@ const getProductById = async (req, res) => {
         if (product) {
             res.json(product);
         } else {
-            res.status(404).json({ message: 'Product not found' });
+            res.status(404);
+            throw new Error('Product not found');
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const createProduct = async (req, res) => {
+const createProduct = async (req, res, next) => {
     const { name, description, price, stock, imageUrl } = req.body;
     try {
         const product = await prisma.product.create({
@@ -38,11 +39,11 @@ const createProduct = async (req, res) => {
         });
         res.status(201).json(product);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const updateProduct = async (req, res) => {
+const updateProduct = async (req, res, next) => {
     const { name, description, price, stock, imageUrl } = req.body;
     try {
         const product = await prisma.product.update({
@@ -57,18 +58,18 @@ const updateProduct = async (req, res) => {
         });
         res.json(product);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res, next) => {
     try {
         await prisma.product.delete({
             where: { id: parseInt(req.params.id) },
         });
         res.json({ message: 'Product removed' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 

@@ -1,11 +1,11 @@
 const prisma = require('../utils/db');
 
-const addOrderItems = async (req, res) => {
+const addOrderItems = async (req, res, next) => {
     const { orderItems, totalPrice } = req.body;
 
     if (orderItems && orderItems.length === 0) {
-        res.status(400).json({ message: 'No order items' });
-        return;
+        res.status(400);
+        throw new Error('No order items');
     } else {
         try {
             const order = await prisma.order.create({
@@ -27,12 +27,12 @@ const addOrderItems = async (req, res) => {
 
             res.status(201).json(order);
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            next(error);
         }
     }
 };
 
-const getOrderById = async (req, res) => {
+const getOrderById = async (req, res, next) => {
     try {
         const order = await prisma.order.findUnique({
             where: { id: parseInt(req.params.id) },
@@ -51,14 +51,15 @@ const getOrderById = async (req, res) => {
         if (order) {
             res.json(order);
         } else {
-            res.status(404).json({ message: 'Order not found' });
+            res.status(404);
+            throw new Error('Order not found');
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const getMyOrders = async (req, res) => {
+const getMyOrders = async (req, res, next) => {
     try {
         const orders = await prisma.order.findMany({
             where: { userId: req.user.id },
@@ -72,11 +73,11 @@ const getMyOrders = async (req, res) => {
         });
         res.json(orders);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const getOrders = async (req, res) => {
+const getOrders = async (req, res, next) => {
     try {
         const orders = await prisma.order.findMany({
             include: {
@@ -87,7 +88,7 @@ const getOrders = async (req, res) => {
         });
         res.json(orders);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
