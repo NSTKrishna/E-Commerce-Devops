@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Menu, X, Search, User, LogOut, LayoutDashboard } from "lucide-react"
+import { Menu, X, User, LogOut, LayoutDashboard } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,10 +70,6 @@ export function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden items-center gap-4 md:flex">
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <Search className="h-5 w-5" />
-            <span className="sr-only">Search</span>
-          </Button>
 
           {isLoading ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-secondary" />

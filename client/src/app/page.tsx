@@ -6,7 +6,6 @@ import { HowItWorksSection } from "@/components/landing/how-it-works-section"
 import { TestimonialsSection } from "@/components/landing/testimonials-section"
 import { StatsSection } from "@/components/landing/stats-section"
 import { CTASection } from "@/components/landing/cta-section"
-import { FeaturedProducts } from "@/components/landing/featured-products"
 
 export default function Home() {
   return (
@@ -15,7 +14,6 @@ export default function Home() {
       <main className="flex-1">
         <HeroSection />
         <StatsSection />
-        <FeaturedProducts />
         <CategoriesSection />
         <HowItWorksSection />
         <TestimonialsSection />

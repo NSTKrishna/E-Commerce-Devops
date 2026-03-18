@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,41 +11,38 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { ArrowLeft, DollarSign, Clock, CheckCircle } from "lucide-react"
-
-const request = {
-  id: "1",
-  title: "Custom Logo Design for Tech Startup",
-  description:
-    "Looking for a modern, minimal logo for my tech startup. Should convey innovation and trust.",
-  category: "Design & Creative",
-  budget: "$200 - $500",
-  urgency: "Normal",
-  buyer: { name: "John D.", rating: 4.8 },
-}
+import { useOfferStore } from "@/store/useOfferStore"
+import { useRequestStore } from "@/store/useRequestStore"
 
 export default function SubmitOfferPage() {
-  const [formData, setFormData] = useState({
-    price: "",
-    deliveryTime: "",
-    message: "",
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { id } = useParams()
+  const router = useRouter()
+  const { createOffer, isLoading, error } = useOfferStore()
+  const { currentRequest, fetchRequestById } = useRequestStore()
+  const [formData, setFormData] = useState({ price: "", deliveryDays: "", message: "" })
   const [isSubmitted, setIsSubmitted] = useState(false)
+
+  useEffect(() => {
+    if (id) fetchRequestById(id as string)
+  }, [id, fetchRequestById])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
-    // Simulate submission
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsSubmitting(false)
-    setIsSubmitted(true)
+    if (!id) return
+    try {
+      await createOffer({
+        requestId: Number(id),
+        price: Number(formData.price),
+        message: formData.message,
+        deliveryDays: formData.deliveryDays ? Number(formData.deliveryDays) : undefined,
+      })
+      setIsSubmitted(true)
+    } catch {
+      // error shown via store
+    }
   }
 
   if (isSubmitted) {
@@ -57,15 +55,12 @@ export default function SubmitOfferPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <CheckCircle className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">
-                Offer Sent Successfully!
-              </h2>
+              <h2 className="text-2xl font-bold text-foreground">Offer Sent Successfully!</h2>
               <p className="mt-2 text-muted-foreground">
-                The buyer will be notified about your offer. You will receive a
-                notification when they respond.
+                The buyer will be notified. You will receive a notification when they respond.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                <Link href="/seller/offers">
+                <Link href="/dashboard/offers">
                   <Button variant="outline">View My Offers</Button>
                 </Link>
                 <Link href="/browse">
@@ -86,7 +81,7 @@ export default function SubmitOfferPage() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           {/* Back Link */}
           <Link
-            href={`/request/${request.id}`}
+            href={`/request/${id}`}
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -112,37 +107,34 @@ export default function SubmitOfferPage() {
                           type="number"
                           placeholder="Enter your price"
                           value={formData.price}
-                          onChange={(e) =>
-                            setFormData({ ...formData, price: e.target.value })
-                          }
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                           className="h-11 pl-9"
                           required
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {"Buyer's budget: "}{request.budget}
-                      </p>
+                      {currentRequest?.budgetRange && (
+                        <p className="text-xs text-muted-foreground">
+                          {"Buyer's budget: "}{currentRequest.budgetRange}
+                        </p>
+                      )}
                     </div>
 
-                    {/* Delivery Time */}
+                    {/* Delivery Days */}
                     <div className="space-y-2">
-                      <Label htmlFor="deliveryTime">Delivery Time</Label>
+                      <Label htmlFor="deliveryDays">Delivery Time (days)</Label>
                       <Select
-                        value={formData.deliveryTime}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, deliveryTime: value })
-                        }
+                        value={formData.deliveryDays}
+                        onValueChange={(value) => setFormData({ ...formData, deliveryDays: value })}
                       >
                         <SelectTrigger className="h-11">
                           <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                           <SelectValue placeholder="Select delivery time" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1day">1 Day</SelectItem>
-                          <SelectItem value="2-3days">2-3 Days</SelectItem>
-                          <SelectItem value="1week">1 Week</SelectItem>
-                          <SelectItem value="2weeks">2 Weeks</SelectItem>
-                          <SelectItem value="custom">Custom</SelectItem>
+                          <SelectItem value="1">1 Day</SelectItem>
+                          <SelectItem value="3">2-3 Days</SelectItem>
+                          <SelectItem value="7">1 Week</SelectItem>
+                          <SelectItem value="14">2 Weeks</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -152,24 +144,20 @@ export default function SubmitOfferPage() {
                       <Label htmlFor="message">Your Message</Label>
                       <Textarea
                         id="message"
-                        placeholder="Introduce yourself and explain why you're the best fit for this request. Highlight your relevant experience and what makes your offer stand out..."
+                        placeholder="Introduce yourself and explain why you're the best fit..."
                         value={formData.message}
-                        onChange={(e) =>
-                          setFormData({ ...formData, message: e.target.value })
-                        }
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         className="min-h-40 resize-none"
                         required
                       />
-                      <p className="text-xs text-muted-foreground">
-                        {formData.message.length}/1000 characters
-                      </p>
+                      <p className="text-xs text-muted-foreground">{formData.message.length}/1000 characters</p>
                     </div>
+
+                    {error && <p className="text-sm text-destructive">{error}</p>}
 
                     {/* Tips */}
                     <div className="rounded-lg bg-secondary/50 p-4">
-                      <h4 className="font-medium text-foreground">
-                        Tips for a Great Offer
-                      </h4>
+                      <h4 className="font-medium text-foreground">Tips for a Great Offer</h4>
                       <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                         <li>- Be specific about what you will deliver</li>
                         <li>- Mention relevant experience or portfolio pieces</li>
@@ -178,20 +166,15 @@ export default function SubmitOfferPage() {
                       </ul>
                     </div>
 
-                    {/* Submit Button */}
+                    {/* Submit */}
                     <div className="sticky bottom-0 border-t border-border bg-card pt-4">
                       <Button
                         type="submit"
                         className="w-full"
                         size="lg"
-                        disabled={
-                          isSubmitting ||
-                          !formData.price ||
-                          !formData.deliveryTime ||
-                          !formData.message
-                        }
+                        disabled={isLoading || !formData.price || !formData.deliveryDays || !formData.message}
                       >
-                        {isSubmitting ? "Sending Offer..." : "Send Offer"}
+                        {isLoading ? "Sending Offer..." : "Send Offer"}
                       </Button>
                     </div>
                   </form>
@@ -200,44 +183,38 @@ export default function SubmitOfferPage() {
             </div>
 
             {/* Request Summary */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Request Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Badge variant="secondary">{request.category}</Badge>
-                    <h3 className="mt-2 font-semibold text-foreground">
-                      {request.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {request.description}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-secondary/50 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Budget</span>
-                      <span className="font-semibold text-foreground">
-                        {request.budget}
-                      </span>
+            {currentRequest && (
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Request Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Badge variant="secondary">{currentRequest.category}</Badge>
+                      <h3 className="mt-2 font-semibold text-foreground">{currentRequest.title}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{currentRequest.description}</p>
                     </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Urgency</span>
-                      <span className="font-semibold text-foreground">
-                        {request.urgency}
-                      </span>
+                    <div className="rounded-lg bg-secondary/50 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Budget</span>
+                        <span className="font-semibold text-foreground">{currentRequest.budgetRange || "N/A"}</span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Urgency</span>
+                        <span className="font-semibold capitalize text-foreground">{currentRequest.urgency}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-border pt-4">
-                    <span className="text-sm text-muted-foreground">Buyer</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {request.buyer.name} ({request.buyer.rating})
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    {currentRequest.buyer && (
+                      <div className="flex items-center justify-between border-t border-border pt-4">
+                        <span className="text-sm text-muted-foreground">Buyer</span>
+                        <span className="text-sm font-medium text-foreground">{currentRequest.buyer.name}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </div>
       </main>
