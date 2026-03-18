@@ -1,31 +1,30 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // Corrected font import
-import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Providers from "./providers"; // Import the provider
+import type { Metadata } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import './globals.css'
+import Providers from "./providers" // Import the provider
 
-const inter = Inter({ subsets: ["latin"] }); // Initialize font
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ShopEasy",
-  description: "Your favorite online store",
-};
+  title: 'BidBoard - Next.js App',
+  description: 'The reverse marketplace',
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <Providers>
-          <Navbar />
-          <main className="container mx-auto py-4 px-4 bg-gray-50 min-h-screen">
-            {children}
-          </main>
+          {children}
         </Providers>
+        <Analytics />
       </body>
     </html>
-  );
+  )
 }
