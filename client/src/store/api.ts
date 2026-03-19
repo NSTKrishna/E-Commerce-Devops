@@ -5,7 +5,7 @@ export interface AuthCredentials { email: string; password: string; name?: strin
 export interface ProfileUpdateData { name?: string; email?: string; password?: string; }
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+    baseURL: 'https://e-commerce-b9fv.onrender.com/api',
 });
 
 api.interceptors.request.use(config => {
