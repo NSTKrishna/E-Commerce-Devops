@@ -61,6 +61,64 @@ function getUrgencyBadge(urgency: string) {
   }
 }
 
+// ── FilterSidebar extracted outside BrowsePage to avoid react-hooks/static-components ──
+interface FilterSidebarProps {
+  selectedCategory: string;
+  setSelectedCategory: (c: string) => void;
+  selectedUrgencies: string[];
+  toggleUrgency: (v: string) => void;
+}
+
+function FilterSidebar({
+  selectedCategory,
+  setSelectedCategory,
+  selectedUrgencies,
+  toggleUrgency,
+}: FilterSidebarProps) {
+  return (
+    <div className="space-y-6">
+      {/* Categories */}
+      <div>
+        <h3 className="mb-3 font-semibold text-foreground">Category</h3>
+        <div className="space-y-1">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                selectedCategory === category
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Urgency */}
+      <div>
+        <h3 className="mb-3 font-semibold text-foreground">Urgency</h3>
+        <div className="space-y-2">
+          {urgencyValues.map((urgency) => (
+            <div key={urgency} className="flex items-center gap-2">
+              <Checkbox
+                id={urgency}
+                checked={selectedUrgencies.includes(urgency)}
+                onCheckedChange={() => toggleUrgency(urgency)}
+              />
+              <Label htmlFor={urgency} className="cursor-pointer text-sm capitalize text-muted-foreground">
+                {urgency}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function BrowsePage() {
   const { requests, fetchRequests, isLoading } = useRequestStore()
 
@@ -147,48 +205,12 @@ export default function BrowsePage() {
     return result
   }, [requests, searchQuery, selectedCategory, selectedUrgencies, sortBy])
 
-  const FilterSidebar = () => (
-    <div className="space-y-6">
-      {/* Categories */}
-      <div>
-        <h3 className="mb-3 font-semibold text-foreground">Category</h3>
-        <div className="space-y-1">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                selectedCategory === category
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Urgency */}
-      <div>
-        <h3 className="mb-3 font-semibold text-foreground">Urgency</h3>
-        <div className="space-y-2">
-          {urgencyValues.map((urgency) => (
-            <div key={urgency} className="flex items-center gap-2">
-              <Checkbox
-                id={urgency}
-                checked={selectedUrgencies.includes(urgency)}
-                onCheckedChange={() => toggleUrgency(urgency)}
-              />
-              <Label htmlFor={urgency} className="cursor-pointer text-sm capitalize text-muted-foreground">
-                {urgency}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
+  const sidebarProps: FilterSidebarProps = {
+    selectedCategory,
+    setSelectedCategory,
+    selectedUrgencies,
+    toggleUrgency,
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -228,7 +250,7 @@ export default function BrowsePage() {
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
                   <div className="mt-6">
-                    <FilterSidebar />
+                    <FilterSidebar {...sidebarProps} />
                   </div>
                 </SheetContent>
               </Sheet>
@@ -270,7 +292,7 @@ export default function BrowsePage() {
             {/* Desktop Sidebar */}
             <aside className="hidden w-64 shrink-0 lg:block">
               <div className="sticky top-24 rounded-lg border border-border bg-card p-4">
-                <FilterSidebar />
+                <FilterSidebar {...sidebarProps} />
               </div>
             </aside>
 

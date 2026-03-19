@@ -38,8 +38,9 @@ export default function LoginPage() {
 
       router.push("/dashboard")
       router.refresh()
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "An error occurred during login")
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(e.response?.data?.message || e.message || "An error occurred during login")
     } finally {
       setIsLoading(false)
     }

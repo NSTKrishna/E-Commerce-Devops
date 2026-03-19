@@ -48,7 +48,8 @@ export default function DashboardLayout({
 
   useEffect(() => {
     checkAuth();
-    setIsLoading(false);
+    const t = setTimeout(() => setIsLoading(false), 0);
+    return () => clearTimeout(t);
   }, [checkAuth]);
 
   useEffect(() => {

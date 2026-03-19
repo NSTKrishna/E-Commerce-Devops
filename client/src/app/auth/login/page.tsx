@@ -22,8 +22,9 @@ export default function LoginPage() {
             const res = await api.post('/auth/login', { email, password });
             login(res.data);
             router.push(redirect);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Login failed');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } }; message?: string };
+            setError(e.response?.data?.message || e.message || 'Login failed');
         }
     };
 
@@ -79,7 +80,7 @@ export default function LoginPage() {
                 </form>
                 <div className="text-center">
                     <p className="text-sm text-gray-600">
-                        Don't have an account?{' '}
+                        Don&apos;t have an account?{' '}
                         <Link href={`/auth/register?redirect=${redirect}`} className="font-medium text-indigo-600 hover:text-indigo-500">
                             Register
                         </Link>

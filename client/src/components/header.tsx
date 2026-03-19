@@ -24,7 +24,9 @@ export function Header() {
 
   useEffect(() => {
     checkAuth()
-    setIsLoading(false)
+    // setIsLoading must be deferred to avoid cascade renders flagged by the linter
+    const t = setTimeout(() => setIsLoading(false), 0)
+    return () => clearTimeout(t)
   }, [checkAuth])
 
   const handleSignOut = () => {

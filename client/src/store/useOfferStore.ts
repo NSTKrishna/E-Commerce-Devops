@@ -2,6 +2,15 @@ import { create } from 'zustand';
 import { Offer, CreateOfferData } from './types';
 import { offerAPI } from './api';
 
+function getErrorMessage(err: unknown): string {
+    if (err && typeof err === 'object' && 'response' in err) {
+        const e = err as { response?: { data?: { message?: string } }; message?: string };
+        return e.response?.data?.message || e.message || 'An error occurred';
+    }
+    if (err instanceof Error) return err.message;
+    return 'An error occurred';
+}
+
 interface OfferState {
     myOffers: Offer[];
     requestOffers: Offer[];
@@ -23,8 +32,8 @@ export const useOfferStore = create<OfferState>((set) => ({
         try {
             const data = await offerAPI.getMyOffers();
             set({ myOffers: data, isLoading: false });
-        } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message, isLoading: false });
+        } catch (err: unknown) {
+            set({ error: getErrorMessage(err), isLoading: false });
         }
     },
     
@@ -33,8 +42,8 @@ export const useOfferStore = create<OfferState>((set) => ({
         try {
             const data = await offerAPI.getOffersByRequest(requestId);
             set({ requestOffers: data, isLoading: false });
-        } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message, isLoading: false });
+        } catch (err: unknown) {
+            set({ error: getErrorMessage(err), isLoading: false });
         }
     },
     
@@ -48,8 +57,8 @@ export const useOfferStore = create<OfferState>((set) => ({
                 isLoading: false 
             }));
             return data;
-        } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message, isLoading: false });
+        } catch (err: unknown) {
+            set({ error: getErrorMessage(err), isLoading: false });
             throw err;
         }
     }

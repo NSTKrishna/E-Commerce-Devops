@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +19,6 @@ import { useRequestStore } from "@/store/useRequestStore"
 
 export default function SubmitOfferPage() {
   const { id } = useParams()
-  const router = useRouter()
   const { createOffer, isLoading, error } = useOfferStore()
   const { currentRequest, fetchRequestById } = useRequestStore()
   const [formData, setFormData] = useState({ price: "", deliveryDays: "", message: "" })

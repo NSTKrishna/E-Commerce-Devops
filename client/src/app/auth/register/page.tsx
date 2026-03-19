@@ -23,8 +23,9 @@ export default function RegisterPage() {
             const res = await api.post('/auth/register', { name, email, password });
             login(res.data);
             router.push(redirect);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Registration failed');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } }; message?: string };
+            setError(e.response?.data?.message || e.message || 'Registration failed');
         }
     };
 

@@ -75,34 +75,34 @@ describe('<Header />', () => {
     expect(screen.getByText('BidBoard')).toBeInTheDocument();
   });
 
-  it('shows Log in and Sign up buttons when no user is logged in', () => {
+  it('shows Log in and Sign up buttons when no user is logged in', async () => {
     mockUser = null;
     render(<Header />);
-    expect(screen.getAllByText('Log in').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Sign up').length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Log in')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Sign up')).length).toBeGreaterThan(0);
   });
 
-  it("shows the user's initials in the Avatar when authenticated", () => {
+  it("shows the user's initials in the Avatar when authenticated", async () => {
     mockUser = { name: 'Alice Smith', email: 'alice@example.com' };
     render(<Header />);
-    const avatars = screen.getAllByTestId('avatar-fallback');
+    const avatars = await screen.findAllByTestId('avatar-fallback');
     // First avatar visible on desktop
     expect(avatars[0]).toHaveTextContent('AS');
   });
 
-  it('shows single-word name initial when user has one name', () => {
+  it('shows single-word name initial when user has one name', async () => {
     mockUser = { name: 'Alice', email: 'alice@example.com' };
     render(<Header />);
-    const avatars = screen.getAllByTestId('avatar-fallback');
+    const avatars = await screen.findAllByTestId('avatar-fallback');
     expect(avatars[0]).toHaveTextContent('A');
   });
 
-  it('calls logout and router.push("/") when Sign out is clicked', () => {
+  it('calls logout and router.push("/") when Sign out is clicked', async () => {
     mockUser = { name: 'Alice Smith', email: 'alice@example.com' };
     render(<Header />);
 
-    const signOutButton = screen.getAllByText('Sign out')[0];
-    fireEvent.click(signOutButton);
+    const signOutButton = await screen.findAllByText('Sign out');
+    fireEvent.click(signOutButton[0]);
 
     expect(mockLogout).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/');
