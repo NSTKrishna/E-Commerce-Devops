@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ecommerce_dev
+    ports:
+      - '5432:5432'
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/ecommerce_dev
+      JWT_SECRET: changeme
+      PORT: 5000
+    ports:
+      - '5000:5000'
+    volumes:
+      - ./server:/usr/src/app/server
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    depends_on:
+      - server
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api
+      PORT: 3000
+    ports:
+      - '3000:3000'
+
+volumes:
+  db-data:
