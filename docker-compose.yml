@@ -36,8 +36,12 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:5000/api
       PORT: 3000
+      CHOKIDAR_USEPOLLING: true
     ports:
       - '3000:3000'
+    volumes:
+      - ./client:/usr/src/app/client
+      - /usr/src/app/client/node_modules
 
 volumes:
   db-data:

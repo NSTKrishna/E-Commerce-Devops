@@ -79,7 +79,7 @@ function FilterSidebar({
     <div className="space-y-6">
       {/* Categories */}
       <div>
-        <h3 className="mb-3 font-semibold text-foreground">Category</h3>
+        <h3 className="mb-3 font-semibold text-foreground">Categories</h3>
         <div className="space-y-1">
           {categories.map((category) => (
             <button
