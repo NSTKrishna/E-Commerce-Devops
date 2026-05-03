@@ -1,14 +1,15 @@
 FROM node:20-alpine
-WORKDIR /usr/src/app/client
 
-# Install dependencies (use legacy-peer-deps to avoid strict peer conflicts)
+WORKDIR /app
+
 COPY client/package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install
 
-# Copy client source
 COPY client/ .
+
+RUN npm run build
 
 ENV PORT=3000
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
