@@ -23,7 +23,7 @@ app.use(cors({
   origin: (origin, callback) => {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     const sanitizedOrigin = origin.trim().replace(/\/$/, '');
     if (allowedOrigins.indexOf(sanitizedOrigin) === -1) {
       const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
@@ -49,10 +49,8 @@ app.use('/api/offers', require('./routes/offer.routes'));
 app.use(notFound);
 app.use(errorHandler);
 
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 module.exports = app;
