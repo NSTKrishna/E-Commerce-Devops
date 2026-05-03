@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:3000',
   'https://e-commerce-nu-ten-77.vercel.app',
+  'http://54.81.5.46:3000'
 ].map(origin => origin.replace(/\/$/, ''));
 
 if (process.env.FRONTEND_URL) {
