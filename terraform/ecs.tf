@@ -1,12 +1,11 @@
-# --- ECR Repositories ---
-resource "aws_ecr_repository" "server" {
-  name                 = "ecommerce-server"
-  image_tag_mutability = "MUTABLE"
+# --- ECR Repositories (referenced as data sources) ---
+# Repos are created via AWS CLI in the workflow (idempotent)
+data "aws_ecr_repository" "server" {
+  name = "ecommerce-server"
 }
 
-resource "aws_ecr_repository" "client" {
-  name                 = "ecommerce-client"
-  image_tag_mutability = "MUTABLE"
+data "aws_ecr_repository" "client" {
+  name = "ecommerce-client"
 }
 
 # --- ECS Cluster ---
@@ -14,28 +13,10 @@ resource "aws_ecs_cluster" "main" {
   name = "ecommerce-cluster"
 }
 
-# --- IAM Roles for ECS ---
-# Task Execution Role (allows ECS to pull images and write logs)
-resource "aws_iam_role" "ecs_execution_role" {
-  name = "ecommerce-ecs-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
-  role       = aws_iam_role.ecs_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+# --- IAM: Use pre-existing AWS Academy LabRole ---
+# AWS Academy blocks iam:CreateRole, so we reference the existing LabRole
+data "aws_iam_role" "lab_role" {
+  name = "LabRole"
 }
 
 # --- Security Group ---
@@ -75,12 +56,12 @@ resource "aws_ecs_task_definition" "server" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+  execution_role_arn       = data.aws_iam_role.lab_role.arn
 
   container_definitions = jsonencode([
     {
       name      = "server"
-      image     = "${aws_ecr_repository.server.repository_url}:latest"
+      image     = "${data.aws_ecr_repository.server.repository_url}:latest"
       essential = true
       portMappings = [
         {
@@ -92,7 +73,6 @@ resource "aws_ecs_task_definition" "server" {
         { name = "NODE_ENV", value = "production" },
         { name = "PORT", value = "5000" }
       ]
-      # Logs configuration can be added here
     }
   ])
 }
@@ -118,12 +98,12 @@ resource "aws_ecs_task_definition" "client" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+  execution_role_arn       = data.aws_iam_role.lab_role.arn
 
   container_definitions = jsonencode([
     {
       name      = "client"
-      image     = "${aws_ecr_repository.client.repository_url}:latest"
+      image     = "${data.aws_ecr_repository.client.repository_url}:latest"
       essential = true
       portMappings = [
         {
@@ -156,12 +136,12 @@ resource "aws_ecs_service" "client_service" {
 # --- Outputs ---
 output "ecr_server_url" {
   description = "The URL of the Server ECR repository"
-  value       = aws_ecr_repository.server.repository_url
+  value       = data.aws_ecr_repository.server.repository_url
 }
 
 output "ecr_client_url" {
   description = "The URL of the Client ECR repository"
-  value       = aws_ecr_repository.client.repository_url
+  value       = data.aws_ecr_repository.client.repository_url
 }
 
 output "ecs_cluster_name" {

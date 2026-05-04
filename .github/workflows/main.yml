@@ -125,6 +125,11 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Ensure ECR repositories exist
+        run: |
+          aws ecr create-repository --repository-name ecommerce-server --image-tag-mutability MUTABLE 2>/dev/null || true
+          aws ecr create-repository --repository-name ecommerce-client --image-tag-mutability MUTABLE 2>/dev/null || true
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
