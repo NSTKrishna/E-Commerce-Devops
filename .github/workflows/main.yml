@@ -138,6 +138,11 @@ jobs:
         working-directory: ./terraform
         run: terraform validate
 
+      - name: Create Terraform variables
+        working-directory: ./terraform
+        run: |
+          echo 'subnet_ids = ${{ secrets.AWS_SUBNET_IDS }}' > ci.auto.tfvars
+
       - name: Terraform Plan
         working-directory: ./terraform
         run: terraform plan -out=tfplan

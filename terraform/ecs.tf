@@ -66,17 +66,7 @@ resource "aws_security_group" "ecs_sg" {
   }
 }
 
-# Get the AWS account's Default VPC and Subnets
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
+# Subnets are provided via var.subnet_ids (AWS Academy blocks ec2:Describe* calls)
 
 # --- Server Task Definition & Service ---
 resource "aws_ecs_task_definition" "server" {
@@ -115,7 +105,7 @@ resource "aws_ecs_service" "server_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = data.aws_subnets.default.ids
+    subnets          = var.subnet_ids
     security_groups  = [aws_security_group.ecs_sg.id]
     assign_public_ip = true
   }
@@ -157,7 +147,7 @@ resource "aws_ecs_service" "client_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = data.aws_subnets.default.ids
+    subnets          = var.subnet_ids
     security_groups  = [aws_security_group.ecs_sg.id]
     assign_public_ip = true
   }
