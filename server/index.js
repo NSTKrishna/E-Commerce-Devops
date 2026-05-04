@@ -41,6 +41,11 @@ app.get('/', (req, res) => {
   res.send('E-Commerce API is running');
 });
 
+// Health check endpoint for Docker & ECS
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 const authRoutes = require('./routes/auth.routes');
 
 app.use('/api/auth', authRoutes);
