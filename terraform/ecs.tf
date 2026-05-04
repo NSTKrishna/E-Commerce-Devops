@@ -19,32 +19,10 @@ data "aws_iam_role" "lab_role" {
   name = "LabRole"
 }
 
-# --- Security Group ---
-# Allows inbound traffic for the server and client
-resource "aws_security_group" "ecs_sg" {
-  name        = "ecommerce-ecs-sg"
-  description = "Allow inbound traffic for server and client"
-
-  ingress {
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# --- Security Group (referenced as data source) ---
+# SG is created via AWS CLI in the workflow (idempotent)
+data "aws_security_group" "ecs_sg" {
+  name = "ecommerce-ecs-sg"
 }
 
 # Subnets are provided via var.subnet_ids (AWS Academy blocks ec2:Describe* calls)
@@ -128,7 +106,7 @@ resource "aws_ecs_service" "client_service" {
 
   network_configuration {
     subnets          = var.subnet_ids
-    security_groups  = [aws_security_group.ecs_sg.id]
+    security_groups  = [data.aws_security_group.ecs_sg.id]
     assign_public_ip = true
   }
 }
