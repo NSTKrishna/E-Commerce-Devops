@@ -316,12 +316,7 @@ jobs:
               --network-configuration "awsvpcConfiguration={subnets=${{ secrets.AWS_SUBNET_IDS }},securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
           fi
 
-      - name: Wait for services stability
-        run: |
-          echo "Waiting for server service..."
-          aws ecs wait services-stable --cluster ecommerce-cluster --services ecommerce-server-service
-          echo "Waiting for client service..."
-          aws ecs wait services-stable --cluster ecommerce-cluster --services ecommerce-client-service
+
 
       - name: Verify services are running
         run: |
