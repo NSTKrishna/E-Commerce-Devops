@@ -2,13 +2,11 @@
 resource "aws_ecr_repository" "server" {
   name                 = "ecommerce-server"
   image_tag_mutability = "MUTABLE"
-  force_destroy        = true
 }
 
 resource "aws_ecr_repository" "client" {
   name                 = "ecommerce-client"
   image_tag_mutability = "MUTABLE"
-  force_destroy        = true
 }
 
 # --- ECS Cluster ---
