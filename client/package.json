@@ -5,8 +5,8 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "lint": "eslint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "start": "next start",
     "test": "echo \"Client tests disabled\"",
     "test:coverage": "echo \"Client test coverage disabled\""
@@ -83,7 +83,7 @@
     "@types/react-dom": "^19",
     "babel-jest": "^30.3.0",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^16.2.4",
+    "eslint-config-next": "^14.2.15",
     "eslint-plugin-unused-imports": "^4.4.1",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
