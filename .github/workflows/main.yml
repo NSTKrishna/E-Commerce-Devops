@@ -105,7 +105,7 @@ jobs:
         run: npm run build
 
   # ───────────────────────────────────────────────────────────────────────────
-  # Phase 2 — Infrastructure Provisioning (Terraform)
+  # Phase 2 — Infrastructure Provisioning (Terraform → S3)
   # ───────────────────────────────────────────────────────────────────────────
   terraform:
     name: Phase 2 — Terraform
@@ -125,21 +125,6 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Ensure ECR repositories exist
-        run: |
-          aws ecr create-repository --repository-name ecommerce-server --image-tag-mutability MUTABLE 2>/dev/null || true
-          aws ecr create-repository --repository-name ecommerce-client --image-tag-mutability MUTABLE 2>/dev/null || true
-
-      - name: Ensure Security Group exists
-        run: |
-          SG_ID=$(aws ec2 describe-security-groups --filters Name=group-name,Values=ecommerce-ecs-sg --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "None")
-          if [ "$SG_ID" = "None" ] || [ -z "$SG_ID" ]; then
-            SG_ID=$(aws ec2 create-security-group --group-name ecommerce-ecs-sg --description "Allow inbound traffic for server and client" --output text --query 'GroupId')
-            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 5000 --cidr 0.0.0.0/0
-            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3000 --cidr 0.0.0.0/0
-          fi
-          echo "Security Group ID: $SG_ID"
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -152,11 +137,6 @@ jobs:
       - name: Terraform Validate
         working-directory: ./terraform
         run: terraform validate
-
-      - name: Create Terraform variables
-        working-directory: ./terraform
-        run: |
-          echo 'subnet_ids = ${{ secrets.AWS_SUBNET_IDS }}' > ci.auto.tfvars
 
       - name: Terraform Plan
         working-directory: ./terraform
@@ -186,6 +166,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Ensure ECR repositories exist
+        run: |
+          aws ecr create-repository --repository-name ecommerce-server --image-tag-mutability MUTABLE 2>/dev/null || true
+          aws ecr create-repository --repository-name ecommerce-client --image-tag-mutability MUTABLE 2>/dev/null || true
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -231,44 +216,119 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy server to ECS
-        run: |
-          aws ecs update-service \
-            --cluster ecommerce-cluster \
-            --service ecommerce-server-service \
-            --force-new-deployment
+      - name: Get AWS Account ID
+        id: account
+        run: echo "ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
 
-      - name: Deploy client to ECS
+      - name: Ensure ECS cluster exists
         run: |
-          aws ecs update-service \
-            --cluster ecommerce-cluster \
-            --service ecommerce-client-service \
-            --force-new-deployment
+          aws ecs create-cluster --cluster-name ecommerce-cluster 2>/dev/null || true
 
-      - name: Wait for server service stability
+      - name: Ensure Security Group exists
+        id: sg
         run: |
-          aws ecs wait services-stable \
-            --cluster ecommerce-cluster \
-            --services ecommerce-server-service
+          SG_ID=$(aws ec2 describe-security-groups --filters Name=group-name,Values=ecommerce-ecs-sg --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "None")
+          if [ "$SG_ID" = "None" ] || [ -z "$SG_ID" ]; then
+            SG_ID=$(aws ec2 create-security-group --group-name ecommerce-ecs-sg --description "ECS traffic" --output text --query 'GroupId')
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 5000 --cidr 0.0.0.0/0
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3000 --cidr 0.0.0.0/0
+          fi
+          echo "SG_ID=$SG_ID" >> $GITHUB_OUTPUT
 
-      - name: Wait for client service stability
+      - name: Register server task definition
+        env:
+          ACCOUNT_ID: ${{ steps.account.outputs.ACCOUNT_ID }}
         run: |
-          aws ecs wait services-stable \
-            --cluster ecommerce-cluster \
-            --services ecommerce-client-service
+          cat <<EOF > /tmp/server-task.json
+          {
+            "family": "ecommerce-server-task",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/LabRole",
+            "containerDefinitions": [{
+              "name": "server",
+              "image": "${ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ecommerce-server:latest",
+              "essential": true,
+              "portMappings": [{"containerPort": 5000, "hostPort": 5000}],
+              "environment": [
+                {"name": "NODE_ENV", "value": "production"},
+                {"name": "PORT", "value": "5000"}
+              ]
+            }]
+          }
+          EOF
+          aws ecs register-task-definition --cli-input-json file:///tmp/server-task.json
+
+      - name: Register client task definition
+        env:
+          ACCOUNT_ID: ${{ steps.account.outputs.ACCOUNT_ID }}
+        run: |
+          cat <<EOF > /tmp/client-task.json
+          {
+            "family": "ecommerce-client-task",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/LabRole",
+            "containerDefinitions": [{
+              "name": "client",
+              "image": "${ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ecommerce-client:latest",
+              "essential": true,
+              "portMappings": [{"containerPort": 3000, "hostPort": 3000}],
+              "environment": [
+                {"name": "NODE_ENV", "value": "production"},
+                {"name": "PORT", "value": "3000"}
+              ]
+            }]
+          }
+          EOF
+          aws ecs register-task-definition --cli-input-json file:///tmp/client-task.json
+
+      - name: Deploy server service
+        env:
+          SG_ID: ${{ steps.sg.outputs.SG_ID }}
+        run: |
+          # Check if service exists
+          SERVICE_STATUS=$(aws ecs describe-services --cluster ecommerce-cluster --services ecommerce-server-service --query 'services[0].status' --output text 2>/dev/null || echo "MISSING")
+          if [ "$SERVICE_STATUS" = "ACTIVE" ]; then
+            aws ecs update-service --cluster ecommerce-cluster --service ecommerce-server-service \
+              --task-definition ecommerce-server-task --force-new-deployment
+          else
+            aws ecs create-service --cluster ecommerce-cluster --service-name ecommerce-server-service \
+              --task-definition ecommerce-server-task --desired-count 1 --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=${{ secrets.AWS_SUBNET_IDS }},securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
+          fi
+
+      - name: Deploy client service
+        env:
+          SG_ID: ${{ steps.sg.outputs.SG_ID }}
+        run: |
+          SERVICE_STATUS=$(aws ecs describe-services --cluster ecommerce-cluster --services ecommerce-client-service --query 'services[0].status' --output text 2>/dev/null || echo "MISSING")
+          if [ "$SERVICE_STATUS" = "ACTIVE" ]; then
+            aws ecs update-service --cluster ecommerce-cluster --service ecommerce-client-service \
+              --task-definition ecommerce-client-task --force-new-deployment
+          else
+            aws ecs create-service --cluster ecommerce-cluster --service-name ecommerce-client-service \
+              --task-definition ecommerce-client-task --desired-count 1 --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=${{ secrets.AWS_SUBNET_IDS }},securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
+          fi
+
+      - name: Wait for services stability
+        run: |
+          echo "Waiting for server service..."
+          aws ecs wait services-stable --cluster ecommerce-cluster --services ecommerce-server-service
+          echo "Waiting for client service..."
+          aws ecs wait services-stable --cluster ecommerce-cluster --services ecommerce-client-service
 
       - name: Verify services are running
         run: |
           echo "=== Server Service ==="
-          aws ecs describe-services \
-            --cluster ecommerce-cluster \
-            --services ecommerce-server-service \
-            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}' \
-            --output table
+          aws ecs describe-services --cluster ecommerce-cluster --services ecommerce-server-service \
+            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}' --output table
 
           echo "=== Client Service ==="
-          aws ecs describe-services \
-            --cluster ecommerce-cluster \
-            --services ecommerce-client-service \
-            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}' \
-            --output table
+          aws ecs describe-services --cluster ecommerce-cluster --services ecommerce-client-service \
+            --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}' --output table
