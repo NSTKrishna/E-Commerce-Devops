@@ -128,11 +128,11 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.6.0
+          terraform_version: 1.12.0
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -upgrade
 
       - name: Terraform Validate
         working-directory: ./terraform
